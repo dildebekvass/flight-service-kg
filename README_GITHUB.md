@@ -5,6 +5,10 @@
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/dildebekvass/flight-service-kg)](https://github.com/dildebekvass/flight-service-kg/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/dildebekvass/flight-service-kg)](https://github.com/dildebekvass/flight-service-kg/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/dildebekvass/flight-service-kg)](https://github.com/dildebekvass/flight-service-kg/network)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/dildebekvass/flight-service-kg/graphs/commit-activity)
 
 ## 🌟 Описание проекта
 
