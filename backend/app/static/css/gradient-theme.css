@@ -243,12 +243,41 @@ body {
   border-left: 4px solid #e74c3c;
 }
 
-/* Модальные окна */
+/* Модальные окна - полная переработка */
+.modal {
+  display: none !important;
+  position: fixed !important;
+  z-index: 9999 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: auto !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal.show {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-backdrop {
+  z-index: 9998 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
 .modal-content {
   border-radius: 20px;
   border: none;
-  backdrop-filter: blur(15px);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3) !important;
+  z-index: 10000 !important;
+  position: relative;
+  margin: auto;
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -256,6 +285,18 @@ body {
   color: white;
   border-radius: 20px 20px 0 0;
   border: none;
+}
+
+.modal-dialog {
+  pointer-events: auto !important;
+  z-index: 10000 !important;
+  margin: 0;
+  width: auto;
+  max-width: none;
+}
+
+.modal.show .modal-dialog {
+  transform: none !important;
 }
 
 /* Прогресс бары */
@@ -391,6 +432,47 @@ h1, h2, h3, h4, h5, h6 {
 
 .flight-card:hover {
   transform: translateY(-3px) scale(1.02);
+}
+
+/* Дополнительные исправления для модальных окон */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+.modal.fade .modal-dialog {
+  transition: transform 0.3s ease-out !important;
+  transform: translate(0, -50px) !important;
+}
+
+.modal.show .modal-dialog {
+  transform: none !important;
+}
+
+.modal-backdrop.fade {
+  opacity: 0;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5 !important;
+}
+
+/* Ensure buttons are clickable */
+.btn {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto !important;
+}
+
+/* Fix for tabs inside modals */
+.modal .nav-tabs .nav-link {
+  color: var(--primary-purple) !important;
+  pointer-events: auto !important;
+}
+
+.modal .nav-tabs .nav-link.active {
+  background: var(--light-gradient) !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Кастомные скроллбары */

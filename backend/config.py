@@ -37,10 +37,10 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///flight_service.db'
+        'sqlite:///instance/flight_service.db'
     
-    # Additional security for production
-    SESSION_COOKIE_SECURE = True
+    # Additional security for production (отключаем HTTPS настройки для PythonAnywhere)
+    SESSION_COOKIE_SECURE = False  # PythonAnywhere free tier doesn't support HTTPS by default
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 

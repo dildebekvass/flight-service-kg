@@ -19,10 +19,10 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-image"></i> Баннеры</h5>
         <div>
-            <button type="button" class="btn btn-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#bannerHelpModal">
+            <button type="button" class="btn btn-info btn-sm me-2" onclick="openHelpModal()">
                 <i class="fas fa-question-circle"></i> Справка
             </button>
-            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#bannerModal">
+            <button type="button" class="btn btn-success btn-sm" onclick="openBannerModal()">
                 <i class="fas fa-plus"></i> Добавить баннер
             </button>
         </div>
@@ -65,13 +65,16 @@
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-warning" 
-                                        onclick="editBanner({{ banner.id }}, '{{ banner.title }}', '{{ banner.image_url or '' }}', {{ banner.is_active|lower }})"
-                                        data-bs-toggle="modal" data-bs-target="#bannerModal">
+                                        data-banner-id="{{ banner.id }}"
+                                        data-banner-title="{{ banner.title }}"
+                                        data-banner-image-url="{{ banner.image_url or '' }}"
+                                        data-banner-active="{{ banner.is_active|lower }}"
+                                        onclick="editBannerFromData(this)">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <a href="{{ url_for('main.admin_toggle_banner_status', banner_id=banner.id) }}" 
                                    class="btn {% if banner.is_active %}btn-danger{% else %}btn-success{% endif %}"
-                                   onclick="return confirm('Вы уверены?')">>
+                                   onclick="return confirm('Вы уверены?')">
                                     {% if banner.is_active %}
                                         <i class="fas fa-ban"></i>
                                     {% else %}
@@ -98,7 +101,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-tag"></i> Специальные предложения</h5>
-        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#offerModal">
+        <button type="button" class="btn btn-success btn-sm" onclick="openOfferModal()">
             <i class="fas fa-plus"></i> Добавить предложение
         </button>
     </div>
@@ -135,13 +138,18 @@
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button type="button" class="btn btn-warning" 
-                                        onclick="editOffer({{ offer.id }}, '{{ offer.title }}', '{{ offer.description }}', {{ offer.discount_percent }}, '{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '' }}', {{ offer.is_active|lower }})"
-                                        data-bs-toggle="modal" data-bs-target="#offerModal">
+                                        data-offer-id="{{ offer.id }}"
+                                        data-offer-title="{{ offer.title }}"
+                                        data-offer-description="{{ offer.description }}"
+                                        data-offer-discount="{{ offer.discount_percent }}"
+                                        data-offer-valid-until="{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '' }}"
+                                        data-offer-active="{{ offer.is_active|lower }}"
+                                        onclick="editOfferFromData(this)">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <a href="{{ url_for('main.admin_toggle_offer_status', offer_id=offer.id) }}" 
                                    class="btn {% if offer.is_active %}btn-danger{% else %}btn-success{% endif %}"
-                                   onclick="return confirm('Вы уверены?')">>
+                                   onclick="return confirm('Вы уверены?')">
                                     {% if offer.is_active %}
                                         <i class="fas fa-ban"></i>
                                     {% else %}
@@ -165,7 +173,7 @@
 </div>
 
 <!-- Banner Modal -->
-<div class="modal fade" id="bannerModal" tabindex="-1">
+<div class="modal" id="bannerModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -191,12 +199,12 @@
                                     <div class="card-header">
                                         <ul class="nav nav-tabs card-header-tabs" id="imageTab" role="tablist">
                                             <li class="nav-item" role="presentation">
-                                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button">
+                                                <button class="nav-link active" id="upload-tab" onclick="switchTab(event, 'upload-pane')" type="button">
                                                     <i class="fas fa-upload"></i> Загрузить файл
                                                 </button>
                                             </li>
                                             <li class="nav-item" role="presentation">
-                                                <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-pane" type="button">
+                                                <button class="nav-link" id="url-tab" onclick="switchTab(event, 'url-pane')" type="button">
                                                     <i class="fas fa-link"></i> URL адрес
                                                 </button>
                                             </li>
@@ -253,7 +261,7 @@
 </div>
 
 <!-- Offer Modal -->
-<div class="modal fade" id="offerModal" tabindex="-1">
+<div class="modal" id="offerModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -302,7 +310,118 @@
 </div>
 
 <script>
+// Простые функции для модальных окон без Bootstrap зависимостей
+function openBannerModal() {
+    console.log('Opening banner modal...');
+    const modal = document.getElementById('bannerModal');
+    if (!modal) {
+        console.error('Banner modal not found!');
+        return;
+    }
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    // Reset form for new banner
+    document.getElementById('bannerModalTitle').textContent = 'Добавить баннер';
+    document.getElementById('bannerForm').reset();
+    document.getElementById('bannerId').value = '';
+    hideImagePreview();
+    console.log('Banner modal opened successfully');
+}
+
+function openHelpModal() {
+    const modal = document.getElementById('bannerHelpModal');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+function closeModalOnOutsideClick(event, modalId) {
+    const modal = document.getElementById(modalId);
+    if (event.target === modal) {
+        closeModal(modalId);
+    }
+}
+
+// Setup event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Close buttons
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+    
+    // Outside click handlers
+    document.getElementById('bannerModal').addEventListener('click', function(e) {
+        closeModalOnOutsideClick(e, 'bannerModal');
+    });
+    
+    document.getElementById('bannerHelpModal').addEventListener('click', function(e) {
+        closeModalOnOutsideClick(e, 'bannerHelpModal');
+    });
+    
+    document.getElementById('offerModal').addEventListener('click', function(e) {
+        closeModalOnOutsideClick(e, 'offerModal');
+    });
+    
+    // Escape key handler
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                closeModal(modal.id);
+            });
+        }
+    });
+});
+
+function editBannerFromData(button) {
+    const id = button.getAttribute('data-banner-id');
+    const title = button.getAttribute('data-banner-title');
+    const imageUrl = button.getAttribute('data-banner-image-url');
+    const isActive = button.getAttribute('data-banner-active') === 'true';
+    
+    editBanner(id, title, imageUrl, isActive);
+}
+
+function editOfferFromData(button) {
+    const id = button.getAttribute('data-offer-id');
+    const title = button.getAttribute('data-offer-title');
+    const description = button.getAttribute('data-offer-description');
+    const discountPercent = button.getAttribute('data-offer-discount');
+    const validUntil = button.getAttribute('data-offer-valid-until');
+    const isActive = button.getAttribute('data-offer-active') === 'true';
+    
+    editOffer(id, title, description, discountPercent, validUntil, isActive);
+}
+
 function editBanner(id, title, imageUrl, isActive) {
+    console.log('Editing banner:', {id, title, imageUrl, isActive});
+    
+    // Open modal first
+    const modal = document.getElementById('bannerModal');
+    if (!modal) {
+        console.error('Banner modal not found!');
+        return;
+    }
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    // Then populate with data
     document.getElementById('bannerModalTitle').textContent = 'Редактировать баннер';
     document.getElementById('bannerId').value = id;
     document.getElementById('bannerTitle').value = title;
@@ -311,10 +430,34 @@ function editBanner(id, title, imageUrl, isActive) {
     
     // Switch to URL tab if image URL is provided
     if (imageUrl) {
-        const urlTab = new bootstrap.Tab(document.getElementById('url-tab'));
-        urlTab.show();
+        // Simple tab switching without Bootstrap
+        document.getElementById('upload-tab').classList.remove('active');
+        document.getElementById('url-tab').classList.add('active');
+        document.getElementById('upload-pane').classList.remove('show', 'active');
+        document.getElementById('url-pane').classList.add('show', 'active');
         showImagePreview(imageUrl);
+    } else {
+        // Switch to upload tab if no URL
+        document.getElementById('url-tab').classList.remove('active');
+        document.getElementById('upload-tab').classList.add('active');
+        document.getElementById('url-pane').classList.remove('show', 'active');
+        document.getElementById('upload-pane').classList.add('show', 'active');
+        hideImagePreview();
     }
+    
+    console.log('Banner edit modal opened successfully');
+}
+
+function openOfferModal() {
+    const modal = document.getElementById('offerModal');
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    // Reset form for new offer
+    document.getElementById('offerModalTitle').textContent = 'Добавить предложение';
+    document.getElementById('offerForm').reset();
+    document.getElementById('offerId').value = '';
 }
 
 function editOffer(id, title, description, discountPercent, validUntil, isActive) {
@@ -325,21 +468,10 @@ function editOffer(id, title, description, discountPercent, validUntil, isActive
     document.getElementById('offerDiscountPercent').value = discountPercent;
     document.getElementById('offerValidUntil').value = validUntil;
     document.getElementById('offerIsActive').checked = isActive;
+    
+    // Open the modal
+    openOfferModal();
 }
-
-// Reset modals when closed
-document.getElementById('bannerModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('bannerModalTitle').textContent = 'Добавить баннер';
-    document.getElementById('bannerForm').reset();
-    document.getElementById('bannerId').value = '';
-    hideImagePreview();
-});
-
-document.getElementById('offerModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('offerModalTitle').textContent = 'Добавить предложение';
-    document.getElementById('offerForm').reset();
-    document.getElementById('offerId').value = '';
-});
 
 // Image preview functions
 function previewImage(input) {
@@ -374,10 +506,23 @@ function hideImagePreview() {
     preview.style.display = 'none';
     document.getElementById('previewImg').src = '';
 }
+
+// Tab switching for image upload
+function switchTab(event, targetId) {
+    event.preventDefault();
+    
+    // Remove active from all tabs and panes
+    document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+    
+    // Add active to clicked tab and target pane
+    event.target.classList.add('active');
+    document.getElementById(targetId).classList.add('show', 'active');
+}
 </script>
 
 <!-- Banner Help Modal -->
-<div class="modal fade" id="bannerHelpModal" tabindex="-1">
+<div class="modal" id="bannerHelpModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

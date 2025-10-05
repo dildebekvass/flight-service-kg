@@ -20,16 +20,17 @@ def create_app(config_name=None):
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'development')
     
-    if config_name == 'development':
-        app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///flight_service.db'
-        app.config['DEBUG'] = True
-    else:
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///flight_service.db')
-        app.config['DEBUG'] = False
+    # Import config
+    from config import config
+    app.config.from_object(config[config_name])
     
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Override with environment variables if set
+    if os.environ.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    if os.environ.get('DATABASE_URL'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    if os.environ.get('APP_URL'):
+        app.config['APP_URL'] = os.environ.get('APP_URL')
     
     # Mail configuration for development
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -38,8 +39,6 @@ def create_app(config_name=None):
     app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') 
     app.config['MAIL_DEFAULT_SENDER'] = 'noreply@flightservice.kg'
-    app.config['APP_NAME'] = 'Flight Service KG'
-    app.config['APP_URL'] = 'http://127.0.0.1:5000'
     
     # Initialize extensions
     db.init_app(app)
