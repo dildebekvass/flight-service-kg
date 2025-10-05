@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Управление контентом</h3>
+            <div>
+                <a href="{{ url_for('main.admin_panel') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Назад в админ панель
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Banners Section -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-image"></i> Баннеры</h5>
+        <div>
+            <button type="button" class="btn btn-info btn-sm me-2" data-bs-toggle="modal" data-bs-target="#bannerHelpModal">
+                <i class="fas fa-question-circle"></i> Справка
+            </button>
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#bannerModal">
+                <i class="fas fa-plus"></i> Добавить баннер
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if banners %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Изображение</th>
+                        <th>Статус</th>
+                        <th>Создан</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for banner in banners %}
+                    <tr>
+                        <td>{{ banner.id }}</td>
+                        <td>{{ banner.title }}</td>
+                        <td>
+                            {% if banner.image_url %}
+                                <img src="{{ banner.image_url }}" alt="{{ banner.title }}" 
+                                     style="max-width: 50px; max-height: 30px; object-fit: cover;">
+                            {% else %}
+                                <span class="text-muted">Нет изображения</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if banner.is_active %}
+                                <span class="badge bg-success">Активен</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ banner.created_at.strftime('%Y-%m-%d') if banner.created_at else 'Н/Д' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning" 
+                                        onclick="editBanner({{ banner.id }}, '{{ banner.title }}', '{{ banner.image_url or '' }}', {{ banner.is_active|lower }})"
+                                        data-bs-toggle="modal" data-bs-target="#bannerModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{{ url_for('main.admin_toggle_banner_status', banner_id=banner.id) }}" 
+                                   class="btn {% if banner.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                                   onclick="return confirm('Вы уверены?')">>
+                                    {% if banner.is_active %}
+                                        <i class="fas fa-ban"></i>
+                                    {% else %}
+                                        <i class="fas fa-check"></i>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h5>Баннеры не найдены</h5>
+            <p>Рекламные баннеры еще не созданы.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Offers Section -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-tag"></i> Специальные предложения</h5>
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#offerModal">
+            <i class="fas fa-plus"></i> Добавить предложение
+        </button>
+    </div>
+    <div class="card-body">
+        {% if offers %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Описание</th>
+                        <th>Скидка</th>
+                        <th>Действительно до</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offer in offers %}
+                    <tr>
+                        <td>{{ offer.id }}</td>
+                        <td>{{ offer.title }}</td>
+                        <td>{{ offer.description[:50] }}{% if offer.description|length > 50 %}...{% endif %}</td>
+                        <td>{{ offer.discount_percent }}%</td>
+                        <td>{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else 'Без срока' }}</td>
+                        <td>
+                            {% if offer.is_active %}
+                                <span class="badge bg-success">Активно</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Неактивно</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning" 
+                                        onclick="editOffer({{ offer.id }}, '{{ offer.title }}', '{{ offer.description }}', {{ offer.discount_percent }}, '{{ offer.valid_until.strftime('%Y-%m-%d') if offer.valid_until else '' }}', {{ offer.is_active|lower }})"
+                                        data-bs-toggle="modal" data-bs-target="#offerModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{{ url_for('main.admin_toggle_offer_status', offer_id=offer.id) }}" 
+                                   class="btn {% if offer.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                                   onclick="return confirm('Вы уверены?')">>
+                                    {% if offer.is_active %}
+                                        <i class="fas fa-ban"></i>
+                                    {% else %}
+                                        <i class="fas fa-check"></i>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h5>Предложения не найдены</h5>
+            <p>Специальные предложения еще не созданы.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Banner Modal -->
+<div class="modal fade" id="bannerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bannerModalTitle">Добавить баннер</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="bannerForm" method="POST" action="{{ url_for('main.admin_content') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="banner">
+                    <input type="hidden" name="banner_id" id="bannerId">
+                    
+                    <div class="mb-3">
+                        <label for="bannerTitle" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="bannerTitle" name="title" required>
+                    </div>
+                    
+                    <!-- Image Upload Options -->
+                    <div class="mb-3">
+                        <label class="form-label">Изображение баннера</label>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <ul class="nav nav-tabs card-header-tabs" id="imageTab" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button">
+                                                    <i class="fas fa-upload"></i> Загрузить файл
+                                                </button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-pane" type="button">
+                                                    <i class="fas fa-link"></i> URL адрес
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="tab-content">
+                                            <!-- File Upload Tab -->
+                                            <div class="tab-pane fade show active" id="upload-pane">
+                                                <input type="file" class="form-control" id="bannerImageFile" name="image_file" 
+                                                       accept="image/*" onchange="previewImage(this)">
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle"></i> Поддерживаемые форматы: JPG, PNG, GIF. Максимальный размер: 5MB
+                                                </div>
+                                            </div>
+                                            <!-- URL Input Tab -->
+                                            <div class="tab-pane fade" id="url-pane">
+                                                <input type="url" class="form-control" id="bannerImageUrl" name="image_url" 
+                                                       placeholder="https://example.com/image.jpg" onchange="previewUrlImage(this)">
+                                                <div class="form-text">
+                                                    <i class="fas fa-info-circle"></i> Введите прямую ссылку на изображение
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Image Preview -->
+                                        <div class="mt-3" id="imagePreview" style="display: none;">
+                                            <label class="form-label">Предварительный просмотр:</label>
+                                            <div class="border rounded p-2">
+                                                <img id="previewImg" src="" alt="Предпросмотр" class="img-fluid" 
+                                                     style="max-height: 200px; max-width: 100%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bannerIsActive" name="is_active" checked>
+                            <label class="form-check-label" for="bannerIsActive">Активен</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить баннер</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Offer Modal -->
+<div class="modal fade" id="offerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="offerModalTitle">Добавить предложение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="offerForm" method="POST" action="{{ url_for('main.admin_content') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="offer">
+                    <input type="hidden" name="offer_id" id="offerId">
+                    
+                    <div class="mb-3">
+                        <label for="offerTitle" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="offerTitle" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="offerDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="offerDescription" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="offerDiscountPercent" class="form-label">Процент скидки</label>
+                        <input type="number" class="form-control" id="offerDiscountPercent" name="discount_percent" min="1" max="100" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="offerValidUntil" class="form-label">Действительно до</label>
+                        <input type="date" class="form-control" id="offerValidUntil" name="valid_until">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="offerIsActive" name="is_active" checked>
+                            <label class="form-check-label" for="offerIsActive">Активно</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-success">Сохранить предложение</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editBanner(id, title, imageUrl, isActive) {
+    document.getElementById('bannerModalTitle').textContent = 'Редактировать баннер';
+    document.getElementById('bannerId').value = id;
+    document.getElementById('bannerTitle').value = title;
+    document.getElementById('bannerImageUrl').value = imageUrl;
+    document.getElementById('bannerIsActive').checked = isActive;
+    
+    // Switch to URL tab if image URL is provided
+    if (imageUrl) {
+        const urlTab = new bootstrap.Tab(document.getElementById('url-tab'));
+        urlTab.show();
+        showImagePreview(imageUrl);
+    }
+}
+
+function editOffer(id, title, description, discountPercent, validUntil, isActive) {
+    document.getElementById('offerModalTitle').textContent = 'Редактировать предложение';
+    document.getElementById('offerId').value = id;
+    document.getElementById('offerTitle').value = title;
+    document.getElementById('offerDescription').value = description;
+    document.getElementById('offerDiscountPercent').value = discountPercent;
+    document.getElementById('offerValidUntil').value = validUntil;
+    document.getElementById('offerIsActive').checked = isActive;
+}
+
+// Reset modals when closed
+document.getElementById('bannerModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('bannerModalTitle').textContent = 'Добавить баннер';
+    document.getElementById('bannerForm').reset();
+    document.getElementById('bannerId').value = '';
+    hideImagePreview();
+});
+
+document.getElementById('offerModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('offerModalTitle').textContent = 'Добавить предложение';
+    document.getElementById('offerForm').reset();
+    document.getElementById('offerId').value = '';
+});
+
+// Image preview functions
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            showImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+        // Clear URL input when file is selected
+        document.getElementById('bannerImageUrl').value = '';
+    }
+}
+
+function previewUrlImage(input) {
+    if (input.value) {
+        showImagePreview(input.value);
+        // Clear file input when URL is entered
+        document.getElementById('bannerImageFile').value = '';
+    }
+}
+
+function showImagePreview(src) {
+    const preview = document.getElementById('imagePreview');
+    const img = document.getElementById('previewImg');
+    img.src = src;
+    preview.style.display = 'block';
+}
+
+function hideImagePreview() {
+    const preview = document.getElementById('imagePreview');
+    preview.style.display = 'none';
+    document.getElementById('previewImg').src = '';
+}
+</script>
+
+<!-- Banner Help Modal -->
+<div class="modal fade" id="bannerHelpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-question-circle"></i> Справка по баннерам</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6><i class="fas fa-info-circle text-info"></i> Как загружать изображения для баннеров?</h6>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-upload"></i> Метод 1: Загрузка файлов</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Рекомендуется для:</strong> Новых изображений</p>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success"></i> Поддерживаемые форматы: JPG, PNG, GIF, WebP</li>
+                                    <li><i class="fas fa-check text-success"></i> Максимальный размер: 5MB</li>
+                                    <li><i class="fas fa-check text-success"></i> Автоматическое именование файлов</li>
+                                    <li><i class="fas fa-check text-success"></i> Хранение на сервере</li>
+                                </ul>
+                                <div class="alert alert-info">
+                                    <small><i class="fas fa-lightbulb"></i> <strong>Совет:</strong> Используйте изображения размером 1200x400px для лучшего отображения</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-link"></i> Метод 2: URL адрес</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Рекомендуется для:</strong> Внешних изображений</p>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success"></i> Прямые ссылки на изображения</li>
+                                    <li><i class="fas fa-check text-success"></i> Изображения с других сайтов</li>
+                                    <li><i class="fas fa-check text-success"></i> CDN и облачные сервисы</li>
+                                </ul>
+                                <div class="alert alert-warning">
+                                    <small><i class="fas fa-exclamation-triangle"></i> <strong>Внимание:</strong> URL должен быть прямой ссылкой на изображение (заканчиваться на .jpg, .png и т.д.)</small>
+                                </div>
+                                <p><strong>Примеры правильных URL:</strong></p>
+                                <code>https://example.com/banner.jpg</code><br>
+                                <code>https://cdn.site.com/images/promo.png</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6><i class="fas fa-eye text-primary"></i> Где отображаются баннеры?</h6>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-primary">
+                            <p class="mb-2"><i class="fas fa-home"></i> <strong>Главная страница сайта</strong> - между заголовком и формой поиска</p>
+                            <p class="mb-2"><i class="fas fa-arrows-alt-h"></i> <strong>Формат:</strong> Карусель с автоматической прокруткой</p>
+                            <p class="mb-0"><i class="fas fa-users"></i> <strong>Видимость:</strong> Все посетители сайта</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6><i class="fas fa-cogs text-warning"></i> Управление баннерами</h6>
+                <ul>
+                    <li><strong>Активность:</strong> Только активные баннеры отображаются на сайте</li>
+                    <li><strong>Порядок:</strong> Баннеры сортируются по полю "order"</li>
+                    <li><strong>Превью:</strong> Можно просмотреть изображение перед сохранением</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

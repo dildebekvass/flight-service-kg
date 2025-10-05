@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="fas fa-ticket-alt"></i> Покупка билета</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Flight Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-plane"></i> Детали рейса</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5><strong>{{ flight.flight_number }}</strong></h5>
+                                        <p class="mb-1">{{ flight.company.name if flight.company else 'Авиакомпания' }}</p>
+                                        <p class="text-muted mb-0">{{ flight.aircraft_type or 'Тип самолета уточняется' }}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <h4 class="text-primary">{{ "%.0f"|format(flight.price) }} сом</h4>
+                                        <p class="text-muted mb-0">за билет</p>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6><i class="fas fa-route"></i> Маршрут</h6>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-info me-2">{{ flight.origin }}</span>
+                                            <i class="fas fa-arrow-right text-primary mx-2"></i>
+                                            <span class="badge bg-success">{{ flight.destination }}</span>
+                                        </div>
+                                        {% if flight.stops > 0 %}
+                                            <small class="text-warning"><i class="fas fa-pause"></i> {{ flight.stops }} пересадка(и)</small>
+                                        {% else %}
+                                            <small class="text-success"><i class="fas fa-check"></i> Прямой рейс</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h6><i class="fas fa-clock"></i> Расписание</h6>
+                                        <p class="mb-1"><strong>Вылет:</strong><br>{{ flight.depart_time.strftime('%d.%m.%Y %H:%M') }}</p>
+                                        <p class="mb-1"><strong>Прилет:</strong><br>{{ flight.arrive_time.strftime('%d.%m.%Y %H:%M') }}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6><i class="fas fa-users"></i> Места</h6>
+                                        <p class="mb-1">Доступно: <span class="badge bg-success">{{ flight.seats_available }}</span></p>
+                                        <p class="mb-1">Всего: {{ flight.seats_total }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Passenger Form -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-user"></i> Данные пассажира</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" id="ticketForm">
+                                    {{ form.hidden_tag() }}
+                                    
+                                    {% if form.errors %}
+                                        <div class="alert alert-danger">
+                                            <h6>Исправьте ошибки:</h6>
+                                            <ul class="mb-0">
+                                                {% for field, errors in form.errors.items() %}
+                                                    {% for error in errors %}
+                                                        <li>{{ field|title }}: {{ error }}</li>
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="mb-3">
+                                        {{ form.passenger_name.label(class="form-label") }}
+                                        {{ form.passenger_name(class="form-control", placeholder="Иванов Иван Иванович") }}
+                                        <div class="form-text">Введите ФИО как в паспорте</div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-info-circle"></i> Информация</h6>
+                                        <p class="mb-0">После нажатия "Купить билет" вы увидите реквизиты для оплаты. Билет будет подтвержден после поступления оплаты.</p>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Information -->
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-header bg-success text-white">
+                                <h5><i class="fas fa-qrcode"></i> Оплата</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- QR Code Payment -->
+                                <div class="text-center mb-4">
+                                    <h6>Оплата по QR-коду</h6>
+                                    <div class="bg-white p-3 rounded border d-inline-block">
+                                        <!-- Ваш личный QR-код -->
+                                        <img src="{{ url_for('static', filename='images/payment_qr.png') }}" 
+                                             alt="QR код для оплаты" 
+                                             class="img-fluid qr-code-img"
+                                             style="width: 200px; height: 200px;"
+                                             onerror="showQRFallback(this)">
+                                        <!-- SVG резервный QR-код -->
+                                        <img src="{{ url_for('static', filename='images/payment_qr.svg') }}" 
+                                             alt="QR код для оплаты" 
+                                             class="img-fluid qr-code-svg"
+                                             style="width: 200px; height: 200px; display: none;">
+                                    </div>
+                                    <p class="text-muted mt-2">Отсканируйте QR-код для оплаты {{ "%.0f"|format(flight.price) }} сом</p>
+                                </div>
+                                
+                                <hr>
+                                
+                                <!-- Payment Instructions -->
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Инструкция по оплате</h6>
+                                    <ol class="mb-2">
+                                        <li>Отсканируйте QR-код выше</li>
+                                        <li>Переведите <strong>{{ "%.0f"|format(flight.price) }} сом</strong></li>
+                                        <li>В комментарии укажите <strong>рейс {{ flight.flight_number }}</strong></li>
+                                        <li>Нажмите "Купить билет" ниже</li>
+                                        <li><strong>После оплаты:</strong> Перейдите в <a href="{{ url_for('main.dashboard') }}" class="text-decoration-none fw-bold">Мои билеты</a></li>
+                                        <li><strong>Важно:</strong> Нажмите кнопку "Я оплатил(а)" рядом с билетом</li>
+                                    </ol>
+                                    <div class="alert alert-warning mb-0 mt-2">
+                                        <small><i class="fas fa-exclamation-triangle"></i> <strong>Обязательно отметьте билет как оплаченный в личном кабинете!</strong></small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contact Information -->
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-phone"></i> Поддержка</h6>
+                                    <p class="mb-1">Если у вас возникли проблемы с оплатой:</p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-envelope"></i> Email: support@airline.kg<br>
+                                        <i class="fas fa-phone"></i> Телефон: +996 XXX XXX XXX
+                                    </p>
+                                </div>
+                                
+                                <!-- Purchase Button -->
+                                <div class="d-grid">
+                                    <button type="submit" form="ticketForm" class="btn btn-success btn-lg">
+                                        <i class="fas fa-shopping-cart"></i> Купить билет за {{ "%.0f"|format(flight.price) }} сом
+                                    </button>
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left"></i> Назад к поиску
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.qr-code-placeholder {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+</style>
+
+<script>
+function showQRFallback(img) {
+    img.style.display = 'none';
+    var svgImg = img.nextElementSibling;
+    svgImg.style.display = 'block';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('ticketForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        const passengerName = form.querySelector('input[name="passenger_name"]').value.trim();
+        
+        if (!passengerName) {
+            e.preventDefault();
+            alert('Пожалуйста, введите ФИО пассажира');
+            return;
+        }
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обработка...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

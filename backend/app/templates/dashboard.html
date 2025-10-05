@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt"></i> Моя Панель</h2>
+        <p class="text-muted">Управляйте вашими авиабилетами и историей путешествий</p>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ tickets|length }}</h4>
+                <p><i class="fas fa-ticket-alt"></i> Всего билетов</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ tickets|selectattr('status', 'equalto', 'paid')|list|length }}</h4>
+                <p><i class="fas fa-check-circle"></i> Активные билеты</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ upcoming_flights|length }}</h4>
+                <p><i class="fas fa-clock"></i> Предстоящие рейсы</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4>{{ "%.0f"|format(tickets|map(attribute='price')|sum) }} сом</h4>
+                <p><i class="fas fa-money-bill-wave"></i> Общая сумма</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancellation Policy Info -->
+<div class="alert alert-info mb-4">
+    <h5><i class="fas fa-info-circle"></i> Политика отмены</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-0">
+                <strong><i class="fas fa-check text-success"></i> Бесплатная отмена:</strong><br>
+                Отмените ваш билет за <strong>24+ часа</strong> до вылета для полного возмещения.
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-0">
+                <strong><i class="fas fa-times text-warning"></i> Не возмещается:</strong><br>
+                Билеты, отмененные менее чем за <strong>24 часа</strong> до вылета, не возмещаются.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Tickets Section -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-ticket-alt"></i> Мои Билеты</h5>
+        <div>
+            <input type="text" id="ticketSearch" class="form-control form-control-sm d-inline-block me-2" 
+                   placeholder="Поиск билетов..." style="width: 200px;">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Забронировать новый рейс
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if tickets %}
+        <div class="table-responsive">
+            <table id="ticketsTable" class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Подтверждение</th>
+                        <th>Детали рейса</th>
+                        <th>Пассажир</th>
+                        <th>Цена</th>
+                        <th>Статус</th>
+                        <th>Отмена</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>
+                            <strong>{{ ticket.confirmation_id }}</strong><br>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ ticket.created_at.strftime('%Y-%m-%d') }}
+                            </small>
+                        </td>
+                        <td>
+                            <strong>{{ ticket.flight.flight_number }}</strong><br>
+                            <span class="badge bg-light text-dark">
+                                {{ ticket.flight.origin }} → {{ ticket.flight.destination }}
+                            </span><br>
+                            <small class="text-muted">
+                                <i class="fas fa-plane-departure"></i> {{ ticket.flight.depart_time.strftime('%Y-%m-%d %H:%M') }}<br>
+                                <i class="fas fa-plane-arrival"></i> {{ ticket.flight.arrive_time.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                            {% if ticket.status == 'paid' and ticket.flight.is_upcoming %}
+                                <br><small class="text-primary" data-departure-time="{{ ticket.flight.depart_time.isoformat() }}">
+                                    <i class="fas fa-clock"></i> Calculating...
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ ticket.passenger_name }}</strong>
+                            {% if ticket.seat_number %}
+                                <br><small class="text-muted">
+                                    <i class="fas fa-chair"></i> Seat: {{ ticket.seat_number }}
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ "%.0f"|format(ticket.price) }} сом</strong>
+                        </td>
+                        <td>
+                            {% if ticket.status == 'paid' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Оплачен
+                                </span>
+                            {% elif ticket.status == 'pending_payment' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock"></i> Ожидает оплаты
+                                </span>
+                            {% elif ticket.status == 'refunded' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-undo"></i> Возвращен
+                                </span>
+                            {% elif ticket.status == 'canceled' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-ban"></i> Отменен
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ ticket.status|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ticket.status == 'paid' %}
+                                {% if ticket.can_be_refunded %}
+                                    <span class="badge bg-success refund-indicator" 
+                                          data-bs-toggle="tooltip" 
+                                          title="Этот билет можно отменить с полным возвратом">
+                                        <i class="fas fa-check"></i> Возврат возможен
+                                    </span>
+                                    <br><small class="text-success">Полный возврат</small>
+                                {% else %}
+                                    <span class="badge bg-warning refund-indicator"
+                                          data-bs-toggle="tooltip" 
+                                          title="Этот билет нельзя вернуть из-за правила 24 часов">
+                                        <i class="fas fa-exclamation-triangle"></i> Без возврата
+                                    </span>
+                                    <br><small class="text-warning">Менее 24ч до вылета</small>
+                                {% endif %}
+                            {% elif ticket.status == 'pending_payment' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-credit-card"></i> Оплатите билет
+                                </span>
+                                <br><small class="text-info">Требуется оплата</small>
+                            {% elif ticket.status == 'refunded' %}
+                                <small class="text-info">
+                                    <i class="fas fa-undo"></i> Возвращено: {{ "%.0f"|format(ticket.price) }} сом
+                                </small>
+                            {% elif ticket.status == 'canceled' %}
+                                <small class="text-muted">
+                                    <i class="fas fa-ban"></i> Возврат не произведен
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ticket.status == 'paid' %}
+                                <button type="button" 
+                                        class="btn btn-sm {% if ticket.can_be_refunded %}btn-outline-success{% else %}btn-outline-danger{% endif %}" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#cancelModal{{ ticket.id }}"
+                                        data-bs-toggle="tooltip" 
+                                        title="{% if ticket.can_be_refunded %}Отменить с полным возвратом{% else %}Отменить без возврата{% endif %}">
+                                    <i class="fas fa-times"></i> Отменить
+                                </button>
+                            {% elif ticket.status == 'pending_payment' %}
+                                <a href="{{ url_for('main.buy_ticket', flight_id=ticket.flight.id) }}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-credit-card"></i> Оплатить
+                                </a>
+                                <a href="{{ url_for('main.mark_as_paid', ticket_id=ticket.id) }}" 
+                                   class="btn btn-sm btn-success"
+                                   onclick="return confirm('Подтвердите, что вы произвели оплату через QR-код')"
+                                   data-bs-toggle="tooltip" 
+                                   title="Отметить как оплаченный после сканирования QR-кода">
+                                    <i class="fas fa-check"></i> Я оплатил(а)
+                                </a>
+                            {% elif ticket.status in ['refunded', 'canceled'] %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+            <h5>Пока нет билетов</h5>
+            <p class="text-muted">Забронируйте ваш первый рейс и начните путешествие!</p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <i class="fas fa-search"></i> Поиск рейсов
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cancellation Modals -->
+{% for ticket in tickets %}
+{% if ticket.status == 'paid' %}
+<div class="modal fade" id="cancelModal{{ ticket.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Отменить билет {{ ticket.confirmation_id }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert {% if ticket.can_be_refunded %}alert-success{% else %}alert-warning{% endif %}">
+                    <h6>
+                        {% if ticket.can_be_refunded %}
+                            <i class="fas fa-check-circle"></i> Отмена с возвратом
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle"></i> Отмена без возврата
+                        {% endif %}
+                    </h6>
+                    <p class="mb-0">
+                        {% if ticket.can_be_refunded %}
+                            Вы получите <strong>полный возврат {{ "%.0f"|format(ticket.price) }} сом</strong>, поскольку отменяете билет более чем за 24 часа до вылета.
+                        {% else %}
+                            <strong>Возврат не будет произведен</strong>, поскольку вы отменяете билет менее чем за 24 часа до вылета.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-plane"></i> Детали рейса:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Рейс:</strong> {{ ticket.flight.flight_number }}</li>
+                            <li><strong>Маршрут:</strong> {{ ticket.flight.origin }} → {{ ticket.flight.destination }}</li>
+                            <li><strong>Отправление:</strong> {{ ticket.flight.depart_time.strftime('%Y-%m-%d %H:%M') }}</li>
+                            <li><strong>Прибытие:</strong> {{ ticket.flight.arrive_time.strftime('%Y-%m-%d %H:%M') }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user"></i> Детали билета:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Пассажир:</strong> {{ ticket.passenger_name }}</li>
+                            <li><strong>Цена:</strong> {{ "%.0f"|format(ticket.price) }} сом</li>
+                            {% if ticket.seat_number %}
+                                <li><strong>Место:</strong> {{ ticket.seat_number }}</li>
+                            {% endif %}
+                            <li><strong>Забронирован:</strong> {{ ticket.created_at.strftime('%Y-%m-%d') }}</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="border-top pt-3 mt-3">
+                    <p class="mb-0"><strong>Вы уверены, что хотите отменить этот билет?</strong></p>
+                    {% if not ticket.can_be_refunded %}
+                        <small class="text-muted">Это действие не может быть отменено и возврат не будет произведен.</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left"></i> Оставить билет
+                </button>
+                <a href="{{ url_for('main.cancel_ticket', ticket_id=ticket.id) }}" 
+                   class="btn {% if ticket.can_be_refunded %}btn-success{% else %}btn-danger{% endif %}">
+                    {% if ticket.can_be_refunded %}
+                        <i class="fas fa-undo"></i> Отменить и вернуть ({{ "%.0f"|format(ticket.price) }} сом)
+                    {% else %}
+                        <i class="fas fa-ban"></i> Отменить билет (без возврата)
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

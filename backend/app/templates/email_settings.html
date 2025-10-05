@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i> Настройка Email
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> Инструкция по настройке Gmail</h5>
+                    <ol>
+                        <li>Перейдите в <a href="https://myaccount.google.com/security" target="_blank">Google Account Security</a></li>
+                        <li>Включите двухфакторную аутентификацию</li>
+                        <li>Найдите "Пароли приложений" (App Passwords)</li>
+                        <li>Создайте новый пароль для "Mail"</li>
+                        <li>Используйте этот пароль ниже</li>
+                    </ol>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email адрес
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="your-email@gmail.com"
+                               value="{{ current_email or '' }}"
+                               required>
+                        <div class="form-text">
+                            Ваш Gmail адрес для отправки писем подтверждения
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-key"></i> Пароль приложения
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Пароль приложения из Google"
+                               required>
+                        <div class="form-text">
+                            16-символьный пароль приложения (НЕ ваш обычный пароль)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="test_email" name="test_email">
+                            <label class="form-check-label" for="test_email">
+                                Отправить тестовое письмо после сохранения
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-save"></i> Сохранить настройки
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <p class="mb-2">Статус email:</p>
+                    {% if email_configured %}
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle"></i> Настроен
+                        </span>
+                        <br><small class="text-muted">{{ current_email }}</small>
+                    {% else %}
+                        <span class="badge bg-warning fs-6">
+                            <i class="fas fa-exclamation-triangle"></i> Не настроен
+                        </span>
+                        <br><small class="text-muted">Письма будут только логироваться</small>
+                    {% endif %}
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('main.admin_panel') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад в админ панель
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

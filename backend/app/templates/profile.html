@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Profile Sidebar -->
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.avatar_filename %}
+                        <img src="{{ url_for('static', filename='uploads/avatars/' + user.avatar_filename) }}" 
+                             class="rounded-circle mb-3" width="120" height="120" 
+                             style="object-fit: cover;" alt="Аватар">
+                    {% else %}
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 120px; height: 120px; font-size: 48px; color: white;">
+                            {{ user.name[0].upper() }}
+                        </div>
+                    {% endif %}
+                    
+                    <h5 class="card-title">{{ user.name }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>
+                    
+                    {% if user.role == 'admin' %}
+                        <span class="badge bg-danger">Администратор</span>
+                    {% elif user.role == 'company_manager' %}
+                        <span class="badge bg-warning">Менеджер компании</span>
+                    {% else %}
+                        <span class="badge bg-primary">Пользователь</span>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.edit_profile') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Редактировать профиль
+                        </a>
+                        <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key"></i> Сменить пароль
+                        </a>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-success">
+                            <i class="fas fa-tachometer-alt"></i> Мои билеты
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <!-- Profile Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user"></i> Информация о профиле</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-user"></i> Основная информация</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Полное имя:</strong></td>
+                                    <td>{{ user.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Телефон:</strong></td>
+                                    <td>{{ user.phone or 'Не указан' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Дата рождения:</strong></td>
+                                    <td>
+                                        {% if user.birth_date %}
+                                            {{ user.birth_date.strftime('%d.%m.%Y') }}
+                                        {% else %}
+                                            Не указана
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Гражданство:</strong></td>
+                                    <td>{{ user.nationality or 'Не указано' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-passport"></i> Документы и адрес</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Номер паспорта:</strong></td>
+                                    <td>{{ user.passport_number or 'Не указан' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Адрес:</strong></td>
+                                    <td>{{ user.address or 'Не указан' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Дата регистрации:</strong></td>
+                                    <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Последнее обновление:</strong></td>
+                                    <td>
+                                        {% if user.updated_at %}
+                                            {{ user.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                                        {% else %}
+                                            Не обновлялся
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if user.bio %}
+                    <hr>
+                    <h6><i class="fas fa-info-circle"></i> О себе</h6>
+                    <p class="text-muted">{{ user.bio }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Profile Statistics -->
+            {% if user.is_regular_user() %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar"></i> Статистика полетов</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary">{{ ticket_stats.total }}</h4>
+                                <small class="text-muted">Всего билетов</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success">{{ ticket_stats.paid }}</h4>
+                                <small class="text-muted">Оплаченных</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-warning">{{ ticket_stats.pending }}</h4>
+                                <small class="text-muted">Ожидают оплаты</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-danger">{{ ticket_stats.cancelled }}</h4>
+                                <small class="text-muted">Отмененных</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

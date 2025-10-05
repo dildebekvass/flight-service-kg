@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-md-12">
+        <div class="card hero-section">
+            <div class="card-header text-center py-5">
+                <h1 class="display-4 text-white mb-3">
+                    <i class="fas fa-plane me-3"></i> Найдите Идеальный Рейс
+                </h1>
+                <p class="lead text-white mb-0">Ищите среди тысяч рейсов и бронируйте ваше следующее путешествие</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Banners Section -->
+{% if banners %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                {% for banner in banners %}
+                <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ loop.index0 }}" 
+                        class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" 
+                        aria-label="Баннер {{ loop.index }}"></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner">
+                {% for banner in banners %}
+                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                    {% if banner.image_url %}
+                        <img src="{{ banner.image_url }}" class="d-block w-100" alt="{{ banner.title }}" 
+                             style="height: 300px; object-fit: cover;">
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5>{{ banner.title }}</h5>
+                        </div>
+                    {% else %}
+                        <div class="d-block w-100 bg-secondary text-white d-flex align-items-center justify-content-center" 
+                             style="height: 300px;">
+                            <div class="text-center">
+                                <h3>{{ banner.title }}</h3>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Предыдущий</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Следующий</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Search Form -->
+<div class="search-form">
+    <div class="text-center mb-4">
+        <h3 class="text-primary"><i class="fas fa-search me-2"></i> Поиск Рейсов</h3>
+        <p class="text-muted">Найдите свой идеальный рейс всего за несколько кликов</p>
+    </div>
+    <form method="get" action="{{ url_for('main.search_flights') }}" class="row g-4">
+        <input type="hidden" name="search" value="1">
+        <div class="col-md-5">
+            <label class="form-label">
+                <i class="fas fa-plane-departure me-2"></i>Откуда
+            </label>
+            <input name="origin" class="form-control" placeholder="Введите город отправления" value="{{ request.args.get('origin', '') }}">
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">
+                <i class="fas fa-plane-arrival me-2"></i>Куда
+            </label>
+            <input name="destination" class="form-control" placeholder="Введите город назначения" value="{{ request.args.get('destination', '') }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100 py-3">
+                <i class="fas fa-search me-2"></i> Найти рейсы
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Search Results -->
+{% if flights %}
+<div class="card mb-5">
+    <div class="card-header">
+        <h4><i class="fas fa-list"></i> Результаты поиска (найдено рейсов: {{ flights|length }})</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for f in flights %}
+            <div class="col-md-6 mb-4">
+                <div class="card border-primary flight-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="text-primary mb-0">
+                                <i class="fas fa-plane me-2"></i>{{ f.flight_number }}
+                            </h5>
+                            <span class="badge bg-success fs-6">{{ f.price }} сом</span>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>{{ f.origin }}</strong><br>
+                                <small class="text-muted">{{ f.depart_time.strftime('%d.%m.%Y') }}</small><br>
+                                <span class="text-primary fw-bold">{{ f.depart_time.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="col-4 text-center">
+                                <i class="fas fa-arrow-right text-primary fs-4"></i><br>
+                                <small class="text-muted">{{ f.duration if f.duration else '~2ч' }}</small>
+                            </div>
+                            <div class="col-4 text-end">
+                                <strong>{{ f.destination }}</strong><br>
+                                <small class="text-muted">{{ f.arrive_time.strftime('%d.%m.%Y') }}</small><br>
+                                <span class="text-primary fw-bold">{{ f.arrive_time.strftime('%H:%M') }}</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-8">
+                                <small class="text-muted">
+                                    <i class="fas fa-building me-1"></i>{{ f.company.name if f.company else 'Авиакомпания' }}
+                                </small>
+                            </div>
+                            <div class="col-4 text-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-users me-1"></i>{{ f.seats_available }} мест
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <a class="btn btn-success" href="{{ url_for('main.buy_ticket', flight_id=f.id) }}">
+                                <i class="fas fa-ticket-alt me-2"></i> Забронировать
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- All Available Flights -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4><i class="fas fa-plane-departure"></i> Все Доступные Рейсы</h4>
+        <span class="badge bg-info">Доступно рейсов: {{ all_flights|length }}</span>
+    </div>
+    <div class="card-body">
+        {% if all_flights %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Рейс</th>
+                        <th>Маршрут</th>
+                        <th>Отправление</th>
+                        <th>Прибытие</th>
+                        <th>Цена</th>
+                        <th>Места</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in all_flights %}
+                    <tr>
+                        <td>
+                            <strong>{{ f.flight_number }}</strong><br>
+                            <small class="text-muted">{{ f.company.name if f.company else 'Авиакомпания' }}</small>
+                        </td>
+                        <td>
+                            <i class="fas fa-plane-departure text-primary"></i> 
+                            <strong>{{ f.origin }}</strong><br>
+                            <i class="fas fa-plane-arrival text-success"></i> 
+                            <strong>{{ f.destination }}</strong>
+                        </td>
+                        <td>
+                            <strong>{{ f.depart_time.strftime('%Y-%m-%d') }}</strong><br>
+                            <small class="text-muted">{{ f.depart_time.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ f.arrive_time.strftime('%Y-%m-%d') }}</strong><br>
+                            <small class="text-muted">{{ f.arrive_time.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-success fs-6">{{ f.price }} сом</span>
+                        </td>
+                        <td>
+                            {% if f.seats_available <= 5 %}
+                                <span class="badge bg-warning">Осталось: {{ f.seats_available }}</span>
+                            {% else %}
+                                <span class="badge bg-success">Доступно: {{ f.seats_available }}</span>
+                            {% endif %}
+                        <td>
+                            <a class="btn btn-sm btn-success" href="{{ url_for('main.buy_ticket', flight_id=f.id) }}">
+                                <i class="fas fa-ticket-alt"></i> Забронировать
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-plane fa-3x text-muted mb-3"></i>
+            <h5>Нет доступных рейсов</h5>
+            <p class="text-muted">Пожалуйста, зайдите позже для проверки новых расписаний рейсов.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Search Filters -->
+<div class="mt-4">
+    <h5>Быстрые фильтры:</h5>
+    <div class="btn-group mb-3" role="group">
+        <a href="?" class="btn btn-outline-primary">Все рейсы</a>
+        <a href="?origin=Бишкек" class="btn btn-outline-primary">Из Бишкека</a>
+        <a href="?origin=Ош" class="btn btn-outline-primary">Из Оша</a>
+        <a href="?destination=Алматы" class="btn btn-outline-primary">В Алматы</a>
+        <a href="?destination=Ташкент" class="btn btn-outline-primary">В Ташкент</a>
+    </div>
+</div>
+{% endblock %}

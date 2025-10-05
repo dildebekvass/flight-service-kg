@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-edit"></i> Редактирование профиля</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <!-- Основная информация -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fas fa-user"></i> Основная информация</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.email.label(class="form-label") }}
+                                    {{ form.email(class="form-control") }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.email.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.phone.label(class="form-label") }}
+                                    {{ form.phone(class="form-control", placeholder="+996 XXX XXX XXX") }}
+                                    {% if form.phone.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.phone.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.birth_date.label(class="form-label") }}
+                                    {{ form.birth_date(class="form-control") }}
+                                    {% if form.birth_date.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.birth_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.nationality.label(class="form-label") }}
+                                    {{ form.nationality(class="form-control", placeholder="Кыргызстан") }}
+                                    {% if form.nationality.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.nationality.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Документы и дополнительная информация -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fas fa-passport"></i> Документы и адрес</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.passport_number.label(class="form-label") }}
+                                    {{ form.passport_number(class="form-control", placeholder="ID 1234567") }}
+                                    {% if form.passport_number.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.passport_number.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.address.label(class="form-label") }}
+                                    {{ form.address(class="form-control", rows="3", placeholder="Укажите ваш адрес") }}
+                                    {% if form.address.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.address.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.avatar.label(class="form-label") }}
+                                    {{ form.avatar(class="form-control") }}
+                                    {% if form.avatar.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.avatar.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">Поддерживаются форматы: JPG, PNG, JPEG</small>
+                                </div>
+                                
+                                {% if current_user.avatar_filename %}
+                                <div class="mb-3">
+                                    <label class="form-label">Текущее фото:</label>
+                                    <div>
+                                        <img src="{{ url_for('static', filename='uploads/avatars/' + current_user.avatar_filename) }}" 
+                                             class="rounded" width="100" height="100" style="object-fit: cover;" alt="Текущий аватар">
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- О себе -->
+                        <hr>
+                        <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> О себе</h6>
+                        <div class="mb-3">
+                            {{ form.bio.label(class="form-label") }}
+                            {{ form.bio(class="form-control", rows="4", placeholder="Расскажите немного о себе...") }}
+                            {% if form.bio.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.bio.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Назад к профилю
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

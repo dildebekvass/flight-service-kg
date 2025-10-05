@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>{{ title or 'Форма рейса' }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h6>Пожалуйста, исправьте следующие ошибки:</h6>
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items() %}
+                                    {% for error in errors %}
+                                        <li>{{ field|title }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.flight_number.label(class="form-label") }}
+                                {{ form.flight_number(class="form-control" + (" is-invalid" if form.flight_number.errors else "")) }}
+                                {% if form.flight_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.flight_number.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Пример: AA123, UA456</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.aircraft_type.label(class="form-label") }}
+                                {{ form.aircraft_type(class="form-control") }}
+                                <div class="form-text">Пример: Boeing 737, Airbus A320</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.origin.label(class="form-label") }}
+                                {{ form.origin(class="form-control" + (" is-invalid" if form.origin.errors else "")) }}
+                                {% if form.origin.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.origin.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Пример: Бишкек (FRU)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.destination.label(class="form-label") }}
+                                {{ form.destination(class="form-control" + (" is-invalid" if form.destination.errors else "")) }}
+                                {% if form.destination.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.destination.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Пример: Алматы (ALA)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="depart_time" class="form-label">Время отправления</label>
+                                <input type="datetime-local" name="depart_time" id="depart_time" 
+                                       class="form-control"
+                                       value="{{ flight.depart_time.strftime('%Y-%m-%dT%H:%M') if flight and flight.depart_time else '' }}" required>
+                                <div class="form-text">Выберите дату и время отправления</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="arrive_time" class="form-label">Время прибытия</label>
+                                <input type="datetime-local" name="arrive_time" id="arrive_time" 
+                                       class="form-control"
+                                       value="{{ flight.arrive_time.strftime('%Y-%m-%dT%H:%M') if flight and flight.arrive_time else '' }}" required>
+                                <div class="form-text">Выберите дату и время прибытия</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.price.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+                                </div>
+                                {% if form.price.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.price.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.seats_total.label(class="form-label") }}
+                                {{ form.seats_total(class="form-control" + (" is-invalid" if form.seats_total.errors else "")) }}
+                                {% if form.seats_total.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.seats_total.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.stops.label(class="form-label") }}
+                                {{ form.stops(class="form-control") }}
+                                <div class="form-text">Number of layovers</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('main.company_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ form.submit.label.text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-calculate duration when times are set
+document.addEventListener('DOMContentLoaded', function() {
+    const departField = document.getElementById('depart_time');
+    const arriveField = document.getElementById('arrive_time');
+    
+    function calculateDuration() {
+        if (departField.value && arriveField.value) {
+            const depart = new Date(departField.value);
+            const arrive = new Date(arriveField.value);
+            
+            if (arrive > depart) {
+                const diffMs = arrive - depart;
+                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                // You could show this in a small info box
+                console.log(`Flight duration: ${diffHrs}h ${diffMins}m`);
+            }
+        }
+    }
+    
+    // Set minimum datetime to current time
+    const now = new Date();
+    const nowString = now.getFullYear() + '-' + 
+        String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(now.getDate()).padStart(2, '0') + 'T' + 
+        String(now.getHours()).padStart(2, '0') + ':' + 
+        String(now.getMinutes()).padStart(2, '0');
+    
+    departField.setAttribute('min', nowString);
+    arriveField.setAttribute('min', nowString);
+    
+    departField.addEventListener('change', calculateDuration);
+    arriveField.addEventListener('change', calculateDuration);
+    
+    // Update arrival min time when departure changes
+    departField.addEventListener('change', function() {
+        if (this.value) {
+            arriveField.setAttribute('min', this.value);
+        }
+    });
+});
+</script>
+{% endblock %}

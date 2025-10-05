@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>Passengers for Flight {{ flight.flight_number }}</h3>
+                <p class="text-muted">
+                    {{ flight.origin }} → {{ flight.destination }} | 
+                    {{ flight.depart_time.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+            </div>
+            <a href="{{ url_for('main.company_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Flight Information Card -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-plane"></i> Информация о рейсе</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Flight Number:</strong><br>
+                        {{ flight.flight_number }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Воздушное судно:</strong><br>
+                        {{ flight.aircraft_type or 'Н/Д' }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Места:</strong><br>
+                        {{ flight.seats_total - flight.seats_available }}/{{ flight.seats_total }} забронировано
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Доход:</strong><br>
+                        {{ "%.2f"|format(passengers|map(attribute='tickets')|map('selectattr', 'status', 'equalto', 'paid')|map('map', attribute='price')|map('sum')|sum) }} сом
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Passengers List -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-users"></i> Passenger List ({{ passengers|length }} passengers)</h5>
+            </div>
+            <div class="card-body">
+                {% if passengers %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Passenger Name</th>
+                                    <th>Email</th>
+                                    <th>Confirmation ID</th>
+                                    <th>Seat</th>
+                                    <th>Ticket Price</th>
+                                    <th>Статус</th>
+                                    <th>Booking Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for passenger in passengers %}
+                                    {% set ticket = passenger.tickets|selectattr('flight_id', 'equalto', flight.id)|selectattr('status', 'equalto', 'paid')|first %}
+                                    {% if ticket %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ ticket.passenger_name or passenger.name }}</strong>
+                                        </td>
+                                        <td>{{ passenger.email }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ ticket.confirmation_id }}</span>
+                                        </td>
+                                        <td>
+                                            {% if ticket.seat_number %}
+                                                <span class="badge bg-secondary">{{ ticket.seat_number }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not assigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>${{ "%.2f"|format(ticket.price) }}</td>
+                                        <td>
+                                            {% if ticket.status == 'paid' %}
+                                                <span class="badge bg-success">Confirmed</span>
+                                            {% elif ticket.status == 'refunded' %}
+                                                <span class="badge bg-info">Refunded</span>
+                                            {% elif ticket.status == 'canceled' %}
+                                                <span class="badge bg-danger">Canceled</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Всего пассажиров:</strong> {{ passengers|length }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Свободных мест:</strong> {{ flight.seats_available }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Загрузка:</strong> 
+                                        {{ "%.1f"|format(((flight.seats_total - flight.seats_available) / flight.seats_total * 100)) }}%
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Общий доход:</strong> 
+                                        {{ "%.2f"|format(passengers|map(attribute='tickets')|map('selectattr', 'status', 'equalto', 'paid')|map('selectattr', 'flight_id', 'equalto', flight.id)|map('map', attribute='price')|map('sum')|sum) }} сом
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle"></i> No Passengers</h5>
+                        <p>No passengers have booked tickets for this flight yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export/Print Options -->
+{% if passengers %}
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Passenger List
+            </button>
+            <button class="btn btn-outline-success" onclick="exportToCSV()">
+                <i class="fas fa-download"></i> Export to CSV
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function exportToCSV() {
+    const table = document.querySelector('table');
+    const rows = Array.from(table.querySelectorAll('tr'));
+    
+    let csvContent = '';
+    rows.forEach(row => {
+        const cols = Array.from(row.querySelectorAll('th, td'));
+        const rowData = cols.map(col => {
+            // Clean up the text content
+            let text = col.textContent.trim();
+            // Handle quotes in CSV
+            if (text.includes(',') || text.includes('"')) {
+                text = '"' + text.replace(/"/g, '""') + '"';
+            }
+            return text;
+        });
+        csvContent += rowData.join(',') + '\n';
+    });
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'flight_{{ flight.flight_number }}_passengers.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+<style>
+@media print {
+    .btn, .alert-info, nav, .card-header {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>{% if user %}Редактировать пользователя{% else %}Добавить нового пользователя{% endif %}</h3>
+            <a href="{{ url_for('main.admin_users') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-user"></i> 
+                    {% if user %}Редактировать {{ user.name }}{% else %}Информация о пользователе{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- User Name -->
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.name.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Введите полное имя пользователя</div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Email адрес для входа и уведомлений</div>
+                    </div>
+                    
+                    <!-- Password -->
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label") }}
+                        {% if user %}
+                            <span class="text-muted">(Оставьте пустым для сохранения текущего пароля)</span>
+                        {% endif %}
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            {% if user %}
+                                Оставьте пустым для сохранения текущего пароля. Введите новый пароль для изменения.
+                            {% else %}
+                                Минимум 6 символов
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Role -->
+                    <div class="mb-3">
+                        {{ form.role.label(class="form-label") }}
+                        {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                        {% if form.role.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.role.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <strong>Администратор:</strong> Полный доступ к системе<br>
+                            <strong>Менеджер компании:</strong> Управление рейсами назначенной компании<br>
+                            <strong>Пользователь:</strong> Бронирование рейсов и просмотр личных билетов
+                        </div>
+                    </div>
+                    
+                    <!-- Active Status -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_active(class="form-check-input") }}
+                            {{ form.is_active.label(class="form-check-label") }}
+                        </div>
+                        <div class="form-text">Неактивные пользователи не могут войти в систему</div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.admin_users') }}" class="btn btn-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> 
+                            {% if user %}Обновить пользователя{% else %}Создать пользователя{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if user %}
+        <!-- User Activity -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Активность пользователя</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Информация об аккаунте</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>ID пользователя:</strong> {{ user.id }}</li>
+                            <li><strong>Создан:</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'Н/Д' }}</li>
+                            <li><strong>Последний вход:</strong> {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Никогда' }}</li>
+                            <li><strong>Статус:</strong> 
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Активен</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Неактивен</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Информация по роли</h6>
+                        {% if user.role == 'company_manager' %}
+                            {% set company = user.company %}
+                            {% if company %}
+                                <p><strong>Управляет:</strong> {{ company.name }} ({{ company.code }})</p>
+                                <p><strong>Статус компании:</strong> 
+                                    {% if company.is_active %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Неактивна</span>
+                                    {% endif %}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">Компания не назначена</p>
+                            {% endif %}
+                        {% elif user.role == 'user' %}
+                            <p><strong>Куплено билетов:</strong> {{ user.tickets|length }}</p>
+                            <p><strong>Всего потрачено:</strong> {{ user.tickets|map(attribute='price')|sum|round(2) }} сом</p>
+                        {% elif user.role == 'admin' %}
+                            <p class="text-info">Администратор - Полный доступ к системе</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
