@@ -1,3 +1,4 @@
+# Совместимые версии для PythonAnywhere
 Flask==2.3.3
 Flask-Login==0.6.3
 Flask-WTF==1.1.1
