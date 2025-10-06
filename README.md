@@ -2,6 +2,10 @@
 
 A comprehensive web application for flight booking and management with support for users, airline companies, and administrators.
 
+## 🎥 Project Demo
+
+Watch the project demonstration on YouTube: [Flight Service Demo](https://youtu.be/nWhGuYolH-A?si=rRrfgqvBUbxqzoqi)
+
 ## Features
 
 ### For Users
